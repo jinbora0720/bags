@@ -1,0 +1,177 @@
+# Fitted G-BAG is correctly specified #
+# Table 1, Table S1, Figure 4
+rm(list = ls())
+
+# dependencies 
+library(tidyverse)
+theme_set(theme_bw())
+library(meshed)
+library(INLA)
+library(bags)
+library(scico)
+
+# path
+path <- "~/BAG_revision/"
+
+#########
+# Table #
+#########
+# subset saved from larger files sim1a(or sim1b)_*.RDS
+# theta1
+bag <- readRDS(paste0(path, "sim1/sim1a_bag.RDS"))
+mgp <- readRDS(paste0(path, "sim1/sim1a_mgp.RDS"))
+inlares <- readRDS(paste0(path, "sim1/sim1a_inla.RDS"))
+
+# theta2
+bag1 <- readRDS(paste0(path, "sim1/sim1b_bag.RDS"))
+mgp1 <- readRDS(paste0(path, "sim1/sim1b_mgp.RDS"))
+inlares1 <- readRDS(paste0(path, "sim1/sim1b_inla.RDS"))
+
+# mean - theta1
+mtab <- rbind(cbind(sapply(bag[c(6:7,9)], mean), sapply(mgp[c(6:7,9)], mean), 
+                    c(sapply(inlares[c(6:7)], mean), NA), c(sapply(inlares[c(13:14)], mean), NA)),
+              cbind(rowMeans(bag[['psi_hat']]), rowMeans(mgp[['psi_hat']]), 
+                    rep(NA,3), rep(NA,3)), 
+              cbind(sapply(bag[c(1:4)], mean), sapply(mgp[c(1:4)], mean), 
+                    sapply(inlares[c(1:4)], mean), sapply(inlares[c(8:11)], mean)),
+              cbind(rowMeans(bag[['tot_time']])[3], 
+                    rowMeans(mgp[['tot_time']])[3], 
+                    rowMeans(inlares[['tot_time']])[3], 
+                    rowMeans(inlares[['tot_time_ns']])[3]))
+rownames(mtab)[c(1:6,11)] <- c("beta", "tausq", "sigsq", "a", "c", "kappa", "elapsed time")
+colnames(mtab) <- c("G-BAG", "Q-MGP", "SPDE-stationary", "SPDE-nonstationary")
+mtab %>% round(3)
+
+# sd - theta1
+sdtab <- rbind(cbind(sapply(bag[c(6:7,9)], sd), sapply(mgp[c(6:7,9)], sd), 
+                     c(sapply(inlares[c(6:7)], sd), NA), c(sapply(inlares[c(13:14)], sd), NA)),
+               cbind(apply(bag[['psi_hat']], 1, sd), 
+                    apply(mgp[['psi_hat']], 1, sd), 
+                    rep(NA,3), rep(NA,3)), 
+               cbind(sapply(bag[c(1:4)], sd), sapply(mgp[c(1:4)], sd), 
+                     sapply(inlares[c(1:4)], sd), sapply(inlares[c(8:11)], sd)),
+               cbind(apply(bag[['tot_time']], 1, sd)[3], 
+                     apply(mgp[['tot_time']], 1, sd)[3], 
+                     apply(inlares[['tot_time']], 1, sd)[3], 
+                     apply(inlares[['tot_time_ns']], 1, sd)[3]))
+rownames(sdtab)[c(1:6,11)] <- c("beta", "tausq", "sigsq", "a", "c", "kappa", "elapsed time")
+colnames(sdtab) <- c("G-BAG", "Q-MGP", "SPDE-stationary", "SPDE-nonstationary")
+sdtab %>% round(3)
+
+# mean - theta2
+mtab1 <- rbind(cbind(sapply(bag1[c(6:7,9)], mean), sapply(mgp1[c(6:7,9)], mean), 
+                    c(sapply(inlares1[c(6:7)], mean), NA), c(sapply(inlares1[c(13:14)], mean), NA)),
+              cbind(rowMeans(bag1[['psi_hat']]), rowMeans(mgp1[['psi_hat']]), 
+                    rep(NA,3), rep(NA,3)), 
+              cbind(sapply(bag1[c(1:4)], mean), sapply(mgp1[c(1:4)], mean), 
+                    sapply(inlares1[c(1:4)], mean), sapply(inlares1[c(8:11)], mean)),
+              cbind(rowMeans(bag1[['tot_time']])[3], 
+                    rowMeans(mgp1[['tot_time']])[3], 
+                    rowMeans(inlares1[['tot_time']])[3], 
+                    rowMeans(inlares1[['tot_time_ns']])[3]))
+rownames(mtab1)[c(1:6,11)] <- c("beta", "tausq", "sigsq", "a", "c", "kappa", "elapsed time")
+colnames(mtab1) <- c("G-bag1", "Q-mgp1", "SPDE-stationary", "SPDE-nonstationary")
+mtab1 %>% round(3)
+
+# sd - theta2
+sdtab1 <- rbind(cbind(sapply(bag1[c(6:7,9)], sd), sapply(mgp1[c(6:7,9)], sd), 
+                     c(sapply(inlares1[c(6:7)], sd), NA), c(sapply(inlares1[c(13:14)], sd), NA)),
+               cbind(apply(bag1[['psi_hat']], 1, sd), 
+                     apply(mgp1[['psi_hat']], 1, sd), 
+                     rep(NA,3), rep(NA,3)), 
+               cbind(sapply(bag1[c(1:4)], sd), sapply(mgp1[c(1:4)], sd), 
+                     sapply(inlares1[c(1:4)], sd), sapply(inlares1[c(8:11)], sd)),
+               cbind(apply(bag1[['tot_time']], 1, sd)[3], 
+                     apply(mgp1[['tot_time']], 1, sd)[3], 
+                     apply(inlares1[['tot_time']], 1, sd)[3], 
+                     apply(inlares1[['tot_time_ns']], 1, sd)[3]))
+rownames(sdtab1)[c(1:6,11)] <- c("beta", "tausq", "sigsq", "a", "c", "kappa", "elapsed time")
+colnames(sdtab1) <- c("G-bag1", "Q-mgp1", "SPDE-stationary", "SPDE-nonstationary")
+sdtab1 %>% round(3)
+
+########
+# BAGs #
+########
+## directions
+directions <- c("W", "NW", "N", "NE")
+
+## mcmc 
+mcmc <- list(save = 1000, burn = 10000, thin = 7)
+
+## grid
+n_time <- 8
+tgrid <- seq(0, 1, length = n_time)
+
+## posterior probability 
+dir_mean <- data.frame(
+  W = rowMeans(sapply(bag$z_save, function(z) 
+    apply(z, 1, function(x) sum(x == "W")/mcmc$save))), 
+  NW = rowMeans(sapply(bag$z_save, function(z) 
+    apply(z, 1, function(x) sum(x == "NW")/mcmc$save))),
+  N = rowMeans(sapply(bag$z_save, function(z) 
+    apply(z, 1, function(x) sum(x == "N")/mcmc$save))),
+  NE = rowMeans(sapply(bag$z_save, function(z) 
+    apply(z, 1, function(x) sum(x == "NE")/mcmc$save)))
+)
+
+## wind with the highest posterior probability 
+wind_hpp <- apply(dir_mean, 1, function(x) directions[which.max(x)])
+val_hpp <- apply(dir_mean, 1, max)
+
+## irregular partitions
+breaks_easting <- bag$data$breaks_northing
+n_easting <- length(breaks_easting)-1
+breaks_northing <- bag$data$breaks_northing
+n_northing <- length(breaks_northing)-1 
+
+easting_width <- breaks_easting[-1] - breaks_easting[1:n_easting]
+northing_height <- breaks_northing[-1] - breaks_northing[1:n_northing]
+easting_midval <- 0.5*breaks_easting[1:n_easting] + 0.5*breaks_easting[-1]
+northing_midval <- 0.5*breaks_northing[1:n_northing] + 0.5*breaks_northing[-1]
+
+ptts_tr <- bag$data$ptts_tr
+
+## true wind directions
+z_true <- rep("W", length(ptts_tr)) 
+ptt_NW <- grep("\\d+,4,2|\\d+,5,2|\\d+,6,2|\\d+,\\d+,3|1,\\d+,4|2,\\d+,4|3,\\d+,4|4,2,8|4,3,8|4,4,8|4,5,8|4,6,8|5,6,8|6,6,8", ptts_tr)
+z_true[ptt_NW] <- "NW"
+ptt_N <- grep("4,\\d+,4|5,\\d+,4|6,\\d+,4|\\d+,\\d+,5|1,\\d+,6|2,\\d+,6|3,\\d+,6|3,1,8|3,2,8|3,3,8|3,4,8|3,5,8|4,1,8", ptts_tr)
+z_true[ptt_N] <- "N"
+ptt_NE <- grep("4,\\d+,6|5,\\d+,6|6,\\d+,6|\\d+,\\d+,7|5,1,8|5,2,8|5,3,8|5,4,8|5,5,8|6,1,8|6,2,8|6,3,8|6,4,8|6,5,8", ptts_tr)
+z_true[ptt_NE] <- "NE"
+
+bag_wind_df <- data.frame(partition = ptts_tr, partition1 = ptts_tr, 
+                           wind = factor(z_true, levels = directions),
+                           wind_hpp = factor(wind_hpp, 
+                                             levels = directions),
+                           val_hpp = val_hpp) %>% 
+  tidyr::separate(partition1, c("row", "col", "time_d"), sep = ",", convert = TRUE) %>% 
+  mutate(easting_center = easting_midval[col], 
+         northing_center = northing_midval[n_northing + 1 - row],
+         width = easting_width[col],
+         height = northing_height[n_northing + 1 - row], 
+         time = tgrid[time_d])
+
+bag_wind_df$timename <- paste0("time = ",round(bag_wind_df$time,3))
+
+bag_wind_df %>% 
+  ggplot() +
+  geom_tile(aes(x = easting_center, y = northing_center, 
+                width = width, height = height, fill = wind)) +
+  facet_wrap(~timename, nrow = 2) +
+  labs(x = "", y = "", fill = "Direction") + 
+  scale_fill_scico_d(palette = 'vik') + 
+  theme(legend.position = "none")
+# ggsave(paste0(path,"plots/sim1c_directions.pdf"), width = 9, height = 5) 
+
+bag_wind_df %>% ggplot() +
+  geom_tile(aes(x = easting_center, y = northing_center, 
+                width = width, height = height, 
+                fill = wind_hpp, alpha = val_hpp)) +
+  labs(x = "", y = "", alpha = "Posterior probability", fill = "Direction") + 
+  scale_alpha(range = c(0.1, 1.5)) + 
+  facet_wrap(~timename, nrow = 2) + 
+  scale_fill_scico_d(palette = 'vik') + 
+  theme(legend.position = "bottom",
+        legend.margin = margin(b = 0, r = 0, t = -15, l = 0)) 
+# ggsave(paste0(path, 'plots/sim1c_windfill.pdf'), width = 9, height = 5.2)

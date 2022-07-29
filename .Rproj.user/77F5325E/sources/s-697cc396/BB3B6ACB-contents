@@ -1,0 +1,19 @@
+Package: bags
+Type: Package
+Title: Bayesian Regression with Gaussian Bag of Directed Acyclic Graphs Processes
+Version: 1.0
+Date: 2022-07-20
+Author: Bora Jin
+Maintainer: Bora Jin <bora.jin@duke.edu>
+Description: Fits Bayesian spatial or spatiotemporal univariate regression models with latent Gaussian Bag of Directed Acyclic Graphs Processes (G-BAGs) as described in Jin, Peruzzi, Dunson (2021) <doi:10.48550/arXiv.2112.11870>.
+License: GPL (>= 2)
+Imports: 
+    tidyverse,
+    magrittr,
+    tidyr, 
+    ggplot2,
+    Rcpp (>= 1.0.9),
+    RcppProgress, 
+    stats, 
+    utils
+LinkingTo: Rcpp, RcppArmadillo, RcppProgress

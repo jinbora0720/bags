@@ -1,0 +1,38 @@
+\name{Ctilde}
+\alias{Ctilde}
+\title{The nonstationary covariance matrix induced by G-BAGs}
+\usage{
+Ctilde(coords_ptt, z, params = list(sig_sq = 2, a = 5, c = 0.5, kappa = 0.9))
+}
+\arguments{
+\item{coords_ptt}{a data frame of \code{n} rows whose columns contain easting,
+northing, time, and partition.}
+
+\item{z}{character matrix of \code{M} (number of partitions) rows. Each row is the
+select direction(s) at each partition.}
+
+\item{params}{list of select parameter values.
+\code{sig_sq} is a partial sill.
+\code{a} is a temporal decay, \code{c} is a spatial decay, and \code{kappa} is space-time
+interaction in a stationary nonseparable spatiotemporal covariance function
+\deqn{cor(w(l), w(l + (h,u))) = exp(-c||h||/(a|u|+1)^{\kappa/2})/(a|u|+1)} in
+\href{https://doi.org/10.1198/016214502760047113}{Gneiting (2002)}.}
+}
+\value{
+\code{n}x\code{n} covariance matrix
+}
+\description{
+Compute a covariance matrix among reference locations
+conditional on a select DAG configuration \code{z}
+}
+\examples{
+
+}
+\references{
+Jin, B., Peruzzi, M., & Dunson, D. B. (2021).
+Bag of DAGs: Flexible Nonstationary Modeling of Spatiotemporal Dependence.
+\href{https://doi.org/10.48550/arXiv.2112.11870}{arXiv.2112.11870}
+}
+\author{
+Bora Jin \href{mailto:bora.jin@duke.edu}{bora.jin@duke.edu}
+}

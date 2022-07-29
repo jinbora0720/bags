@@ -1,0 +1,53 @@
+# split KR_hourly_*_all.RDS due to size
+## bags ##
+# effective sample size
+w_ess <- c(apply(out$w_save, 1, posterior::ess_basic),
+           apply(out$w_pred_save, 1, posterior::ess_basic))
+y_ess <- c(apply(out$y_save, 1, posterior::ess_basic),
+           apply(out$y_pred_save, 1, posterior::ess_basic))
+
+# estimation
+yhat <- rowMeans(out$y_save)
+yhat_qt <- apply(out$y_save, 1, function(x)
+  quantile(x, probs = c(0.025, 0.975)))
+yhat_low <- yhat_qt[1,]
+yhat_hi <- yhat_qt[2,]
+
+# prediction
+y_bag <- rowMeans(out$y_pred_save)
+y_bag_qt <- apply(out$y_pred_save, 1, function(x)
+  quantile(x, probs = c(0.025, 0.975)))
+y_bag_low <- y_bag_qt[1,]
+y_bag_hi <- y_bag_qt[2,]
+
+saveRDS(list(tau_sq_save = out$tau_sq_save,
+             sig_sq_save = out$sig_sq_save,
+             psi_save = out$psi_save,
+             z_save = out$z_save,
+             est_time_per_iter = out$est_time/out$est_iter,
+             pred_time_per_iter = out$pred_time/out$pred_iter,
+             yhat = yhat,
+             yhat_low = yhat_low,
+             yhat_hi = yhat_hi,
+             y_bag = y_bag,
+             y_bag_low = y_bag_low,
+             y_bag_hi = y_bag_hi,
+             w_ess = w_ess,
+             y_ess = y_ess,
+             coords_ptt = out$coords_ptt),
+        paste0(path, "analysis/KR_hourly_bag2.RDS"))
+
+## mgp ##
+y_mgp <- meshout$yhat_mcmc %>% summary_list_mean()
+y_mgp_low <- meshout$yhat_mcmc %>% summary_list_q(q = 0.025)
+y_mgp_hi <- meshout$yhat_mcmc %>% summary_list_q(q = 0.975)
+
+saveRDS(list(tausq_mcmc = meshout$tausq_mcmc[,mcmc$thin*(1:mcmc$save)],
+             sigsq_mcmc = meshout$theta_mcmc[4,,mcmc$thin*(1:mcmc$save)],
+             psi_mcmc = meshout$theta_mcmc[-4,,mcmc$thin*(1:mcmc$save)],        # temporal decay, spatial decay, interaction
+             time_per_iter = meshout$mcmc_time/meshout$mcmc,
+             coordsdata = meshout$coordsdata,
+             y_mgp = y_mgp,
+             y_mgp_low = y_mgp_low,
+             y_mgp_hi = y_mgp_hi),
+        paste0(path, "analysis/KR_hourly_mgp2.RDS"))

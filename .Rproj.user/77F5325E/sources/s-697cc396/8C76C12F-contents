@@ -1,0 +1,7 @@
+magrittr,
+tidyr, 
+ggplot2,
+
+importFrom(magrittr, "%>%")
+importFrom(tidyr, "separate")
+importFrom(ggplot2, "cut_interval")

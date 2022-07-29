@@ -1,0 +1,148 @@
+\name{bag}
+\alias{bag}
+\title{Estimation and prediction for univariate Bayesian regression models with G-BAGs}
+\description{Conduct posterior sampling using Markov chain Monte Carlo (MCMC) for
+univariate Bayesian regression models with Gaussian errors whose spatial or
+spatiotemporal random effects are modeled with G-BAGs}
+\usage{
+bag(
+  y,
+  X = NULL,
+  coords,
+  X_pred = NULL,
+  coords_pred = NULL,
+  n_partition,
+  breaks_partition = list(breaks_easting = NULL, breaks_northing = NULL, breaks_time =
+    NULL),
+  directions,
+  init = list(tau_sq = NULL, sig_sq = NULL, w = NULL, z = NULL, psi = NULL, Sn = NULL),
+  hyper = list(at = NULL, bt = NULL, as = NULL, bs = NULL, la = NULL, ua = NULL, lc =
+    NULL, uc = NULL, mu0 = NULL, invV0 = NULL),
+  mcmc = list(save = 1000, burn = 0, thin = 1),
+  n_threads = 10,
+  seed = 123,
+  verbose = TRUE,
+  save_data = TRUE,
+  save_est = FALSE,
+  debug = list(psi_fixed = FALSE, z_fixed = FALSE)
+)
+}
+\arguments{
+\item{y}{vector of a univariate outcome of length \code{n}.
+Each element corresponds to a row of \code{coords}.}
+
+\item{X}{matrix of covariates (without intercept) of size \code{n} x \code{p}.
+Each row corresponds to a row of \code{coords}.}
+
+\item{coords}{matrix of coordinates with \code{n} rows and \code{d = 2} or \code{d = 3}
+columns for spatial or spatiotemporal data, respectively.
+Columns should be in the order of easting, northing, and time.}
+
+\item{X_pred}{matrix of covariates with \code{n_pred} rows and \code{p} columns.
+Each row corresponds to a row of \code{coords_pred}.}
+
+\item{coords_pred}{matrix of coordinates of size \code{n_pred} x \code{d} to predict the
+latent process and the outcome value at.
+Columns should be in the order of easting, northing, and time.
+If unspecified, predictions are not made.}
+
+\item{n_partition}{integer vector of length \code{d}. Each element corresponds to
+the number of intervals each coordinate axis (e.g., easting, northing, time)
+is divided into.}
+
+\item{breaks_partition}{list of break points in each axis. If specified,
+coordinates will fall into bins between given break points in each axis.
+For instance, 5 break points will render 4 partitions.
+\code{breaks_partition} supersede \code{n_partition}, if specified.}
+
+\item{directions}{directions to put in a bag.
+Any acyclic combination of "W", "NW", "N", "NE", "E", "SE", "S", "SW"
+is available. For instance, if "W" is chosen, "E" should be excluded.
+"W" stands for direction \emph{from} west.
+If unspecified, "SW", "W", "NW", and "N" are selected by default.}
+
+\item{init}{list of initial values.
+\code{tau_sq} is the nugget parameter and starts at 0.1 (default).
+\code{sig_sq} is the partial sill whose initial value is 1 (default).
+\code{w} represents spatial random effects whose default initial value is \code{rnorm(n)}.
+\code{z} is the direction at partition \code{i} and starts at the first element
+of \code{directions} (default).
+\code{psi} is a vector of correlation parameters
+(\code{a}: temporal decay, \code{c}: spatial decay, \code{kappa}: space-time interaction)
+of a stationary nonseparable spatiotemporal covariance function
+\deqn{cor(w(l), w(l + (h,u))) = exp(-c||h||/(a|u|+1)^{\kappa/2})/(a|u|+1)} in
+\href{https://doi.org/10.1198/016214502760047113}{Gneiting (2002)} where
+\eqn{h} is a spatial lag, \eqn{u} is a temporal lag, and \eqn{|\cdot|, ||\cdot||}
+are 1 and 2 dimensional Euclidean distance. By default, they start at 0.5.
+\code{Sn} is a random lower-triangular matrix controlling for the contour of the
+proposal for \code{psi} in robust adaptive metropolis algorithm described in
+\href{https://doi.org/10.1007/s11222-011-9269-5}{Vihola (2012)}. It starts
+at a diagonal matrix (default).}
+
+\item{hyper}{list of hyperparameter values in prior distributions.
+\code{at} is a shape parameter (2, default) and \code{bt} is a rate parameter (0.1, default)
+in \code{tau_sq ~ IG(at, bt)}. IG stands for an inverse-Gamma distribution.
+\code{as} is a shape parameter (2, default) and \code{bs} is a rate parameter (1, default)
+in \code{sig_sq ~ IG(as, bs)}.
+\code{la} is a lower bound (0.001, default) and \code{ua} is an upper bound (1000, default)
+in \code{a ~ Unif(la, ua)}.
+\code{lc} is a lower bound (0.001, default) and \code{uc} is an upper bound (1000, default)
+in \code{c ~ Unif(lc, uc)}. Cf. \code{kappa ~ Unif(0, 1)} by default.
+\code{mu0} is a mean vector (\code{rep(0, p)}, default) and
+\code{invV0} is a precision matrix (\code{diag(0.01, p)}, default) in \code{beta ~ N(mu0, invV0^{-1})}.}
+
+\item{mcmc}{list of save, burn, thin.
+Total number of MCMC iterations is burn + thin*save.}
+
+\item{n_threads}{integer number of OpenMP threads. This applies to prediction only.}
+
+\item{seed}{seed number}
+
+\item{verbose}{boolean to print progress of MCMC iterations.}
+
+\item{save_data}{boolean to save preprocessed data.}
+
+\item{save_est}{boolean to save estimated \code{y} and \code{w} for \code{coords}. If \code{FALSE}
+(default), parameters and predicted \code{y} and \code{w} for \code{coords_pred} are saved.}
+
+\item{debug}{list for debugging. Updates for \code{z} or \code{psi} can be turned off.}
+}
+\value{
+\item{coords_ptt}{data frame returned if \code{save_data = TRUE} (default) with
+\code{n} + \code{n_pred} rows and 7 columns. The first \code{n} rows correspond to \code{coords},
+and the next \code{n_pred} rows correspond to \code{coords_pred}.
+Each row correspond to original coordinates and partition index in each axis.}
+\item{tau_sq_save}{vector of length \code{mcmc$save}.
+Each element is a posterior sample of \code{tau_sq}.}
+\item{sig_sq_save}{vector of length \code{mcmc$save}.
+Each element is a posterior sample of \code{sig_sq}.}
+\item{psi_save}{matrix of three rows (\verb{a,c,kappa}) and \code{mcmc$save} columns.
+Each column contains a posterior sample of \code{psi}.}
+\item{z_save}{matrix of \code{prod(n_partitions)} rows and \code{mcmc$save} columns.
+Each column contains a posterior sample of \code{z}.}
+\item{beta_save}{matrix of \code{p} rows and \code{mcmc$save} columns.
+Each column contains a posterior sample of \code{beta}.}
+\item{w_save}{matrix of \code{n} rows and \code{mcmc$save} columns.
+Each column contains a posterior sample of \code{w}. Returned if \code{save_est = TRUE}.}
+\item{y_save}{matrix of \code{n} rows and \code{mcmc$save} columns.
+Each column contains a posterior sample of \code{y}. Returned if \code{save_est = TRUE}.}
+\item{est_iter}{total number of iterations at estimation step}
+\item{est_time}{time in seconds spent at estimation step (not including preprocessing)}
+\item{w_pred_save}{matrix of \code{n_pred} rows and \code{mcmc$save} columns.
+Each column contains a posterior predictive sample of \code{w} at \code{coords_pred}.}
+\item{y_pred_save}{matrix of \code{n_pred} rows and \code{mcmc$save} columns.
+Each column contains a posterior predictive sample of \code{y} at \code{coords_pred}.}
+\item{pred_iter}{total number of iterations at prediction step}
+\item{pred_time}{time in seconds spent at prediction step (not including preprocessing)}
+}
+\description{
+Estimation and prediction for univariate Bayesian regression models with G-BAGs
+}
+\references{
+Jin, B., Peruzzi, M., & Dunson, D. B. (2021).
+Bag of DAGs: Flexible Nonstationary Modeling of Spatiotemporal Dependence.
+\href{https://doi.org/10.48550/arXiv.2112.11870}{arXiv.2112.11870}
+}
+\author{
+Bora Jin \href{mailto:bora.jin@duke.edu}{bora.jin@duke.edu}
+}

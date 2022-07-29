@@ -1,0 +1,18 @@
+y_pred_ess <- lapply(bag2$y_ess, function(x) x[-c(1:n_tr)])
+out <- bag2$out[c(1:5,8:13)]
+bag2$out[-c(6:7)] %>% names()
+saveRDS(list(rmspe = bag2$rmspe,
+             mape = bag2$mape,
+             coverage = bag2$coverage,
+             meanwidth = bag2$meanwidth,
+             est_time_per_iter = bag2$est_time_per_iter,
+             pred_time_per_iter = bag2$pred_time_per_iter,
+             tausq_hat = bag2$tausq_hat,
+             psi_hat = bag2$psi_hat,
+             sigsq_hat = bag2$sigsq_hat,
+             z_save = bag2$z_save,
+             z_pvalue = bag2$z_pvalue,
+             y_pred_ess = y_pred_ess,
+             data0 = bag2$data0,                                                     # seed = 3
+             out = out),
+        paste0(path, "sim2/sim2b_bag.RDS"))

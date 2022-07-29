@@ -1,0 +1,362 @@
+rm(list = ls())
+
+# dependencies
+library(tidyverse)
+theme_set(theme_bw())
+library(sf) 
+library(rnaturalearth)
+library(rnaturalearthdata)
+# detach("package:boraGP", unload = TRUE)
+# devtools::install_github('jinbora0720/boraGP')
+# .rs.restartR()
+library(boraGP)
+library(fdaPDE)
+# install.packages("INLA",
+#                  repos=c(getOption("repos"),
+#                          INLA="https://inla.r-inla-download.org/R/testing"),
+#                  dep=TRUE)
+library(INLA)
+library(scico)
+
+# source
+source('~/PFAS/R/boraGP_utils.R')
+
+# Arctic land
+# sf::sf_use_s2(FALSE) 
+world <- ne_countries(scale = "medium", returnclass = "sf")
+arctic_utm <- st_crop(world, xmin = -180, xmax = 180, 
+                  ymin = 57, ymax = 90) %>% 
+  smoothr::densify(max_distance = 1) %>%
+  st_transform("+proj=utm +zone=40N +datum=WGS84 +units=km") %>% 
+  st_combine()
+
+# call data (September, 2020)
+sss <- readRDS("~/PFAS/Data/seasurfacesalinity_2020Aug.RDS") # 52067
+ice_utm <- readRDS("~/PFAS/Data/iceextent_2020Aug.RDS") %>% 
+  st_combine()
+
+# UTM projection
+sss_utm <- st_transform(st_as_sf(sss, 
+                                 coords = c("long", "lat"),
+                                 crs = 4326), 
+                        "+proj=utm +zone=40N +datum=WGS84 +units=km") 
+
+# combine arctic and ice to make one barrier
+crs <- st_crs("+proj=utm +zone=40N +datum=WGS84 +units=km")
+a <- st_sf(geom = arctic_utm, crs = crs)
+b <- st_sf(geom = ice_utm, crs = crs)
+barrier_utm <- st_combine(rbind(a, b))
+rm(crs, a, b)
+
+# barrier_utm %>% 
+#   ggplot() + 
+#   geom_sf()
+
+# delete ones on or too close to the land or the ice in the data
+dlt_barrier <- unlist(st_is_within_distance(barrier_utm,
+                                            sss_utm$geometry, 
+                                            dist = 1)) %>% unique()
+sss_utm <- sss_utm[-dlt_barrier,] # 50689
+rm(dlt_barrier)
+
+# arctic_utm %>% 
+#   ggplot() + 
+#   geom_sf() + 
+#   geom_sf(data = ice_utm, fill = "skyblue") +
+#   geom_sf(data = sss_utm, aes(color = sss), size = 0.1) +
+#   scale_color_distiller(palette = "RdYlBu")
+
+# SSS transformation
+sss_utm$ssss <- sqrt(sss_utm$sss)
+hist(sss_utm$ssss)
+
+# filling the mismatch 
+# lat <- seq(62.125, 84.875, by = 0.25) 
+long <- seq(-179.875, 179.875, by = 0.25)
+lat <- sort(unique(sss$lat))
+coords_longlat <- expand.grid(long, lat) %>% 
+  as.data.frame() %>% 
+  rename(long = Var1, lat = Var2)
+coords_all_utm <- st_transform(st_as_sf(coords_longlat, 
+                                        coords = c("long", "lat"),
+                                        crs = 4326), 
+                        "+proj=utm +zone=40N +datum=WGS84 +units=km") 
+coords <- coords_all_utm %>% 
+  st_coordinates() %>% 
+  as.data.frame() %>% 
+  rename(easting = X, northing = Y)
+rm(coords_longlat)
+
+# delete ones on or too close to the land or the ice in grid
+dlt_overlap <- unlist(st_intersects(sss_utm$geometry, 
+                                    coords_all_utm$geometry)) %>% unique()
+dlt_barrier2 <- unlist(st_is_within_distance(barrier_utm,
+                                             coords_all_utm$geometry, 
+                                             dist = 9)) %>% unique()
+dlt_all <- unique(c(dlt_barrier2, dlt_overlap))
+
+coords_tr <- sss_utm$geometry %>% 
+  st_coordinates() %>% 
+  as.data.frame() %>% 
+  rename(easting = X, northing = Y)
+n_tr <- nrow(coords_tr)
+orgy_tr <- sss_utm$sss
+y_tr <- sss_utm$ssss
+coords_pred <- coords[-dlt_all,] # 4061
+n_pred <- nrow(coords_pred)
+coords_all <- rbind(coords_tr, coords_pred)
+coords_sf <- st_transform(st_as_sf(coords_all*1000, 
+                                   coords = c("easting", "northing"), 
+                                   crs = 32640), 
+                          "+proj=utm +zone=40N +datum=WGS84 +units=km")
+rm(dlt_all, dlt_barrier2, coords, coords_all_utm)
+
+# arctic_utm %>%
+#   ggplot() +
+#   geom_sf() +
+#   geom_sf(data = ice_utm, fill = "skyblue") +
+#   geom_sf(data = coords_sf[-c(1:n_tr),], size = 0.1, alpha = 0.5, color = "red") # +
+#   # coord_sf(xlim = c(-1400, 817.1763), 
+#   #        ylim = c(10291.98, 12658.29), expand = FALSE) + # Canadian Archipelago
+#   # coord_sf(xlim = c(1000, 2400), 
+#   #          ylim = c(10500, 12000), expand = FALSE) + # East Siberean 
+#   # coord_sf(xlim = c(1200, 1700), 
+#   #          ylim = c(8816, 9200), expand = FALSE) + # Kara 
+#   # coord_sf(xlim = c(-1950, -800), 
+#   #          ylim = c(6500, 7800), expand = FALSE) # Baltic
+
+# imaginary grid
+bbox <- st_bbox(arctic_utm)
+igrid <- expand.grid(easting = seq(bbox$xmin, bbox$xmax, length = 45),
+                      northing = seq(bbox$ymin, bbox$ymax, length = 45))
+igrid_sf <- st_transform(st_as_sf(igrid*1000, coords = c("easting", "northing"),
+                                  crs = 32640), "+proj=utm +zone=40N +datum=WGS84 +units=km")
+
+# not on land
+dlt_land <- unlist(st_intersects(arctic_utm,
+                                 igrid_sf$geometry)) %>% unique()
+igrid <- igrid[-dlt_land, ]
+igrid_sf <- igrid_sf[-dlt_land, ]
+rm(dlt_land)
+
+# arctic_utm %>%
+#   ggplot() +
+#   geom_sf() +
+#   geom_sf(data = ice_utm, fill = "skyblue") +
+#   geom_sf(data = igrid_sf, col = "blue")
+
+#------------------------------------------------------------------------------#
+# number of neighbors
+m <- 15
+
+# ordering 
+ord <- order(-coords_tr[,1]-coords_tr[,2]) # makes sense physically 
+# arctic_utm %>% ggplot() + geom_sf() +
+#   geom_sf(data = coords_sf[ord[1:(m+1)],])
+
+# priors
+## variogram
+sample_vario <- gstat::variogram(ssss ~ 1, data = sss_utm)
+vario_matern <- gstat::vgm(psill = 0.3, 
+                           model = "Mat", 
+                           range = 2000, 
+                           nugget = 0.1, 
+                           kappa = 1)
+fit_matern <- gstat::fit.variogram(sample_vario, vario_matern)
+# plot(sample_vario, fit_matern)
+
+## estimated starting value
+sigma.sq <- fit_matern[2,2]
+phi <- 1/fit_matern[2,3]
+nu <- fit_matern[2,4]
+tau.sq <- 0.1
+phi.low <- 0.0001
+phi.high <- 0.0031
+
+starting <- list("phi" = phi, "sigma.sq" = sigma.sq, 
+                 "tau.sq" = tau.sq, "nu" = nu)
+tuning <- list("phi" = 0.0005, "sigma.sq" = 0.05, "tau.sq" = 0.05, "nu" = 0.05) 
+priors <- list("phi.Unif" = c(phi.low, phi.high),
+               "sigma.sq.IG" = c(2, sigma.sq), "tau.sq.IG" = c(2, tau.sq), 
+               "nu.Unif" = c(nu-0.5,nu+0.5))
+
+# MCMC
+n.samples <- 15000
+burn <- 10000
+
+#------#
+# NNGP #
+#------#
+# set.seed(123)
+# m.s <- spNNGP(y_tr ~ 1, coords = coords_tr, starting = starting,
+#               method = "response", n.neighbors = m,
+#               tuning = tuning, priors = priors, cov.model = "matern",
+#               n.samples = n.samples, n.omp.threads = 10, ord = ord,
+#               return.neighbor.info = TRUE, verbose = TRUE)
+# nninfo <- m.s$neighbor.info
+# p.s <- predict(m.s, X.0 = matrix(1, nrow = n_pred),
+#                coords.0 = as.matrix(coords_pred),
+#                sub.sample = list(start = burn+1, end = n.samples, thin = 1),
+#                n.omp.threads = 10, verbose = TRUE)
+# 
+# saveRDS(list(m.s = m.s, nninfo = nninfo, p.s = p.s),
+#         "~/PFAS/R/arctic_all_NNGP.RDS")
+
+# NNGPres <- readRDS("~/PFAS/R/arctic_all_NNGP.RDS")
+# 
+# # convergence
+# plot(NNGPres$m.s$p.beta.samples, type = "l")
+# plot(NNGPres$m.s$p.theta.samples[,1], type = "l")
+# plot(NNGPres$m.s$p.theta.samples[,2], type = "l")
+# plot(NNGPres$m.s$p.theta.samples[,3], type = "l")
+# plot(NNGPres$m.s$p.theta.samples[,4], type = "l")
+# 
+# # posterior summary 
+# timeNNGP <- as.numeric(NNGPres$m.s$run.time)[1:3] + 
+#   as.numeric(NNGPres$p.s$run.time)[1:3]
+# betaNNGP <- mean(NNGPres$m.s$p.beta.samples[-c(1:burn)])
+# thetaNNGP <- colMeans(NNGPres$m.s$p.theta.samples[-c(1:burn),])
+# 
+# ystarNNGP <- rowMeans(NNGPres$p.s$p.y.0)
+# yquantNNGP <- apply(NNGPres$p.s$p.y.0, 1, 
+#                     function(x) quantile(x, probs = c(0.025, 0.975)))
+# orgystarNNGP <- rowMeans(NNGPres$p.s$p.y.0^2)
+# 
+# # Arctic Ocean
+# data.frame(coords_all, sss = c(orgy_tr, orgystarNNGP)) %>% 
+#   filter(sss <= max(orgy_tr)) %>% # 117 above 42.124
+#   ggplot() + 
+#   geom_point(aes(easting, northing, color = sss)) +
+#   geom_sf(data = arctic_utm) + 
+#   geom_sf(data = ice_utm, fill = NA) +
+#   scale_color_distiller(palette = "RdYlBu")
+# 
+# # Focus 1: Canadian Archipelago 
+# data.frame(coords_all, observed = c(orgy_tr, rep(NA, n_pred)), 
+#            filled = c(orgy_tr, orgystarNNGP)) %>% 
+#   pivot_longer(c(observed, filled), 
+#                names_to = "what", values_to = "sss") %>% 
+#   ggplot() + 
+#   facet_grid(~ what) + 
+#   geom_point(aes(easting, northing, color = sss)) +
+#   geom_sf(data = arctic_utm) + 
+#   geom_sf(data = ice_utm, fill = "skyblue") +
+#   scale_color_distiller(palette = "RdYlBu", 
+#                         limits = c(min(orgy_tr), max(orgy_tr))) +
+#   coord_sf(xlim = c(-1400, 817.1763), 
+#            ylim = c(10291.98, 12658.29), expand = FALSE) + 
+#   labs(x = "", y = "") + 
+#   theme(axis.text.x = element_text(angle = 35, hjust = 0.9))
+# 
+# # Focus 2: Siberian Sea 
+# data.frame(coords_all, observed = c(orgy_tr, rep(NA, n_pred)), 
+#            filled = c(orgy_tr, orgystarNNGP)) %>% 
+#   pivot_longer(c(observed, filled), 
+#                names_to = "what", values_to = "sss") %>% 
+#   ggplot() + 
+#   facet_grid(~ what) + 
+#   geom_point(aes(easting, northing, color = sss)) +
+#   geom_sf(data = arctic_utm) + 
+#   geom_sf(data = ice_utm, fill = "skyblue") +
+#   scale_color_distiller(palette = "RdYlBu", 
+#                         limits = c(min(orgy_tr), max(orgy_tr))) +
+#   coord_sf(xlim = c(1000, 2400), 
+#            ylim = c(10500, 12000), expand = FALSE) +
+#   labs(x = "", y = "") + 
+#   theme(axis.text.x = element_text(angle = 35, hjust = 0.9))
+# 
+# # Focus 3: Kara Sea 
+# data.frame(coords_all, observed = c(orgy_tr, rep(NA, n_pred)), 
+#            filled = c(orgy_tr, orgystarNNGP)) %>% 
+#   pivot_longer(c(observed, filled), 
+#                names_to = "what", values_to = "sss") %>% 
+#   ggplot() + 
+#   facet_grid(~ what) + 
+#   geom_point(aes(easting, northing, color = sss)) +
+#   geom_sf(data = arctic_utm) + 
+#   geom_sf(data = ice_utm, fill = "skyblue") +
+#   scale_color_distiller(palette = "RdYlBu", 
+#                         limits = c(min(orgy_tr), max(orgy_tr))) +
+#   coord_sf(xlim = c(1000, 1900), 
+#            ylim = c(8800, 9250), expand = FALSE) +
+#   labs(x = "", y = "") + 
+#   theme(axis.text.x = element_text(angle = 35, hjust = 0.9))
+# 
+# # Focus 4: Baltic Sea 
+# data.frame(coords_all, observed = c(orgy_tr, rep(NA, n_pred)), 
+#            filled = c(orgy_tr, orgystarNNGP)) %>% 
+#   pivot_longer(c(observed, filled), 
+#                names_to = "what", values_to = "sss") %>% 
+#   ggplot() + 
+#   facet_grid(~ what) + 
+#   geom_point(aes(easting, northing, color = sss)) +
+#   geom_sf(data = arctic_utm) + 
+#   geom_sf(data = ice_utm, fill = "skyblue") +
+#   scale_color_distiller(palette = "RdYlBu", 
+#                         limits = c(min(orgy_tr), max(orgy_tr))) +
+#   coord_sf(xlim = c(-1950, -800), 
+#            ylim = c(6500, 7800), expand = FALSE) +
+#   labs(x = "", y = "") + 
+#   theme(axis.text.x = element_text(angle = 35, hjust = 0.9))
+
+# barrier neighbor info
+time_barrier <- system.time({
+barrier_nninfo_all <- barrier_nninfo_out2(coords = coords_tr,
+                                          coords_sf = coords_sf,
+                                          igrid = igrid, igrid_sf = igrid_sf,
+                                          ord = ord,
+                                          coords.0 = coords_pred,
+                                          m = m, barrier = barrier_utm,
+                                          verbose = TRUE, 
+                                          savepath = "~/PFAS/R")
+})
+saveRDS(list(time_barrier = time_barrier,
+             barrier_nninfo_all = barrier_nninfo_all),
+        "~/PFAS/R/sss/arctic_all_sss_BORA-GP_neighbor.RDS")
+# barrier_nn.indx.0_list <- barrier_nninfo_all$barrier_nn.indx.0_list
+# barrier_dist0 <- barrier_nninfo_all$barrier_dist0
+# barrier_n.indx <- barrier_nninfo_all$barrier_n.indx
+# barrier_dist <- barrier_nninfo_all$barrier_dist
+# coords_tr_ord <- barrier_nninfo_all$coords_ord
+# coords_sf_ord <- barrier_nninfo_all$coords_sf_ord
+# 
+# 
+# 
+# 
+# 
+# # priors
+# maxdist <- max(dist(coords_tr))
+# d.low <- 0.25*maxdist
+# d.high <- 0.75*maxdist
+# dist_mat <- matrix(c(0, d.low, d.high, d.low, 0, 0, d.high, 0, 0), 
+#                    nrow = 3, ncol = 3, byrow = T)
+# phi.cand <- seq(0.001:0.01, by=0.0001) 
+# cov.low = cov.high <- rep(0, length(phi.cand))
+# for (i in 1:length(phi.cand)) {
+#   cov <- Cov_matern(dist = dist_mat, sigmasq = 1, phi = phi.cand[i], nu = 1)
+#   cov.low[i] <- cov[1,2]
+#   cov.high[i] <- cov[1,3]
+# }
+# phi.high <- phi.cand[which.min(abs(cov.low - 0.05))]
+# phi.low <- phi.cand[which.min(abs(cov.high - 0.05))]
+# phi <- mean(c(phi.high, phi.low))
+# sigma.sq <- var(y_tr)
+# tau.sq <- 0.1
+# nu <- 1
+# starting <- list("phi" = phi, "sigma.sq" = sigma.sq, "tau.sq" = tau.sq, "nu" = nu)
+# tuning <- list("phi" = 0.005, "sigma.sq" = 0.05, "tau.sq" = 0.05, "nu" = 0.05) 
+# priors <- list("phi.Unif" = c(phi.low, phi.high),
+#                "sigma.sq.IG" = c(2, sigma.sq), "tau.sq.IG" = c(2, tau.sq), 
+#                "nu.Unif" = c(nu-0.5,nu+0.5))
+# 
+# # quantile list
+# qlist <- c(0.25, 0.2, 0.15, 0.1, .05, .025, 0.015, .005, .0005)  # c(50, 60, 70, 80, 90, 95, 97, 99, 99.9)
+# 
+# # MCMC
+# chain <- 3
+# n.samples <- 15000
+# burn <- 5000
+# set.seed(6)
+# seeds <- sample(100, chain)
+
+

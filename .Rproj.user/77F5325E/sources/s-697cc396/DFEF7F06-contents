@@ -1,0 +1,55 @@
+\dontrun{
+  library(tidyverse)
+  theme_set(theme_bw())
+  
+  # set seed
+  seed <- 20220720
+  
+  # create coordinates on a grid
+  ngrid_e <- 50 # number of grid on the easting axis
+  ngrid_n <- 50 # number of grid on the northing axis
+  ngrid_t <- 2 # number of grid on the time axis
+  
+  grid_e <- seq(0, 1, length = ngrid_e)
+  grid_n <- seq(0, 1, length = ngrid_n)
+  grid_t <- seq(0, 1, length = ngrid_t)
+  coords <- expand.grid(easting = grid_e, northing = grid_n, time = grid_t) \%>\%
+    arrange(time, easting, northing)
+  n <- nrow(coords)
+  
+  # set the number of partitions in each coordinate axis
+  n_easting <- 25
+  n_northing <- 1
+  n_time <- 2
+  
+  # set the true direction
+  z_true <- rep("W", times = n_easting*n_northing*n_time)
+  
+  # set parameters
+  a <- 0.8
+  c <- 1
+  kappa <- 0
+  sig_sq <- 2
+  tau_sq <- 0.1
+  beta <- -0.2
+  
+  # generate data
+  data <- rbag(coords = coords,
+               n_partition = c(n_easting, n_northing, n_time),
+               breaks_partition = list(breaks_easting = NULL,
+                                       breaks_northing = NULL,
+                                       breaks_time = NULL),
+               z = z_true,
+               params = list(tau_sq = tau_sq,
+                             sig_sq = sig_sq,
+                             a = a, c = c, kappa = kappa,
+                             beta = beta),
+               seed = seed)
+  
+  # plot generated y
+  ggplot(data) +
+    geom_raster(aes(easting, northing, fill = y)) +
+    facet_grid(~ factor(time, label = paste("Time =", sort(unique(time))))) +
+    scale_fill_viridis_c() +
+    labs(x = "Easting", y = "Northing")
+} 

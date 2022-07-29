@@ -1,0 +1,7 @@
+data.frame(rbind(coords_tr[,c("true_easting", "true_northing", "time_d")],
+                 coords_tt[,c("true_easting", "true_northing", "time_d")],
+                 coords_grid[,c("true_easting", "true_northing", "time_d")]),
+           ess = bagres$y_ess) %>%
+  filter(time_d == 5) %>% 
+  ggplot() + 
+  geom_histogram(aes(ess))
