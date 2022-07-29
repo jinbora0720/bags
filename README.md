@@ -15,5 +15,5 @@ For detailed guidelines of how to use functions of the package `bags`, refer to 
 [this vignette](https://github.com/jinbora0720/GBAGs/example/example.html). 
 The vignette demonstrates a full analysis of a univariate Bayesian regression model with Gaussian errors whose spatiotemporal random effects 
 are modeled with a G-BAG prior. It shows how to 1) generate random data from prior sampling of G-BAGs, 
-2) compute a nonstationary covariance matrix derived from G-BAG, 2) run posterior sampling from the model, and 
+2) compute a nonstationary covariance matrix derived from G-BAG, 3) run posterior sampling from the model, and 
 4) make inferences using posterior samples. 
