@@ -6,7 +6,7 @@ You can install this package using the following code
 devtools::install_github("jinbora0720/bags")
 ```
 
-Once installed, you can reproduce all analyses in the manuscript with the code available in a separate GitHub repository called 
+Once it is installed, you can reproduce all analyses in the manuscript with the code available in a separate GitHub repository called 
 [GBAGs](https://github.com/jinbora0720/GBAGs). 
 Refer to `README` in GBAGs repository for further instructions to reproduce the analyses by sections of the manuscript. 
 
