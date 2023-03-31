@@ -1,9 +1,0 @@
-useDynLib(bags, .registration=TRUE)
-importFrom(Rcpp, evalCpp)
-importFrom(magrittr, "%>%")
-importFrom(tidyr, "separate")
-importFrom(ggplot2, "cut_interval")
-importFrom("stats", "dist", "rgamma", "rnorm", "runif")
-importFrom("utils", "setTxtProgressBar", "txtProgressBar")
-
-export("Ctilde", "bag", "getmode", "rbag")

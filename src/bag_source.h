@@ -50,7 +50,7 @@ Rcpp::CharacterVector findchild(const std::string& m, const Rcpp::CharacterMatri
   for (int i=0; i < n; i++) {
     std::string m1 = Rcpp::as<std::string>(z_ptt(i,1));
     std::string m2 = Rcpp::as<std::string>(z_ptt(i,2));
-    if (m == m1 | m == m2) {
+    if (m == m1 || m == m2) {
       std::string name = Rcpp::as<std::string>(ptts(i));
       out.push_back(name);
     }

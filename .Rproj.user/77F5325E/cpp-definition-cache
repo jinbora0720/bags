@@ -1,29 +1,29 @@
 [
     {
-        "file": "/home/bora/bags/src/bag_predict.cpp",
-        "file_last_write": 1658442666.0,
+        "file": "/home/bora/packages/bags/src/bag_predict.cpp",
+        "file_last_write": 1680285095.0,
         "definitions": [
             {
                 "usr": "c:@F@bag_predict#&1$@N@arma@S@Mat>#d#S0_#&1$@N@Rcpp@S@Vector>#VI19#@N@Rcpp@ST>1#T@PreserveStorage#S2_#S2_#S0_#S0_#&1$@N@arma@S@Col>#d#S4_#I#b#",
                 "kind": 6,
                 "parent_name": "",
                 "name": "bag_predict(const arma::mat &, const arma::mat &, const Rcpp::List &, const Rcpp::List &, const Rcpp::List &, const arma::mat &, const arma::mat &, const arma::vec &, const arma::vec &, int, bool)",
-                "file": "/home/bora/bags/src/bag_predict.cpp",
+                "file": "/home/bora/packages/bags/src/bag_predict.cpp",
                 "line": 11,
                 "column": 12
             }
         ]
     },
     {
-        "file": "/home/bora/bags/src/bag_source.cpp",
-        "file_last_write": 1658442676.0,
+        "file": "/home/bora/packages/bags/src/bag_source.cpp",
+        "file_last_write": 1680285095.0,
         "definitions": [
             {
                 "usr": "c:@F@createRnH#&1$@N@arma@S@Mat>#d#&1$@N@Rcpp@S@Vector>#VI19#@N@Rcpp@ST>1#T@PreserveStorage#S2_#&1$@N@Rcpp@S@Vector>#VI16#@N@Rcpp@ST>1#T@PreserveStorage#&1d#S6_#S6_#b#S4_#",
                 "kind": 6,
                 "parent_name": "",
                 "name": "createRnH(const arma::mat &, const Rcpp::List &, const Rcpp::List &, const Rcpp::CharacterVector &, const double &, const double &, const double &, bool, const Rcpp::CharacterVector &)",
-                "file": "/home/bora/bags/src/bag_source.cpp",
+                "file": "/home/bora/packages/bags/src/bag_source.cpp",
                 "line": 9,
                 "column": 12
             },
@@ -32,7 +32,7 @@
                 "kind": 6,
                 "parent_name": "",
                 "name": "wsigupdate(const arma::vec &, arma::vec &, double &, const double &, const Rcpp::CharacterVector &, const Rcpp::List &, const Rcpp::CharacterVector &, const Rcpp::List &, const Rcpp::List &, const Rcpp::CharacterVector &, const double &, const double &, const double &)",
-                "file": "/home/bora/bags/src/bag_source.cpp",
+                "file": "/home/bora/packages/bags/src/bag_source.cpp",
                 "line": 105,
                 "column": 12
             },
@@ -41,7 +41,7 @@
                 "kind": 6,
                 "parent_name": "",
                 "name": "zupdate(const arma::mat &, const arma::vec &, const double &, const Rcpp::List &, const Rcpp::CharacterVector &, const Rcpp::List &, const Rcpp::List &, const Rcpp::CharacterVector &, const double &, const Rcpp::CharacterVector &)",
-                "file": "/home/bora/bags/src/bag_source.cpp",
+                "file": "/home/bora/packages/bags/src/bag_source.cpp",
                 "line": 265,
                 "column": 23
             },
@@ -50,22 +50,22 @@
                 "kind": 6,
                 "parent_name": "",
                 "name": "psiupdate(const arma::vec &, const Rcpp::CharacterVector &, const double &, arma::vec &, arma::mat &, const arma::mat &, Rcpp::List &, const arma::mat &, const Rcpp::List &, const Rcpp::List &, const Rcpp::CharacterVector &, const Rcpp::CharacterVector &, const double &, const double &, bool, bool, const Rcpp::CharacterVector &)",
-                "file": "/home/bora/bags/src/bag_source.cpp",
+                "file": "/home/bora/packages/bags/src/bag_source.cpp",
                 "line": 331,
                 "column": 12
             }
         ]
     },
     {
-        "file": "/home/bora/bags/src/bag_source.h",
-        "file_last_write": 1658285127.0,
+        "file": "/home/bora/packages/bags/src/bag_source.h",
+        "file_last_write": 1680285118.0,
         "definitions": [
             {
                 "usr": "c:@F@isin#&1$@N@std@N@__cxx11@S@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@S@allocator>#C#&1$@N@Rcpp@S@Vector>#VI16#@N@Rcpp@ST>1#T@PreserveStorage#",
                 "kind": 6,
                 "parent_name": "",
                 "name": "isin(const std::string &, const Rcpp::CharacterVector &)",
-                "file": "/home/bora/bags/src/bag_source.h",
+                "file": "/home/bora/packages/bags/src/bag_source.h",
                 "line": 5,
                 "column": 6
             },
@@ -74,7 +74,7 @@
                 "kind": 6,
                 "parent_name": "",
                 "name": "str_split(const std::string &, const char *)",
-                "file": "/home/bora/bags/src/bag_source.h",
+                "file": "/home/bora/packages/bags/src/bag_source.h",
                 "line": 18,
                 "column": 26
             },
@@ -83,7 +83,7 @@
                 "kind": 6,
                 "parent_name": "",
                 "name": "concatenate(const Rcpp::CharacterVector &, const std::string &, const double &)",
-                "file": "/home/bora/bags/src/bag_source.h",
+                "file": "/home/bora/packages/bags/src/bag_source.h",
                 "line": 30,
                 "column": 13
             },
@@ -92,7 +92,7 @@
                 "kind": 6,
                 "parent_name": "",
                 "name": "findchild(const std::string &, const Rcpp::CharacterMatrix &, const Rcpp::CharacterVector &)",
-                "file": "/home/bora/bags/src/bag_source.h",
+                "file": "/home/bora/packages/bags/src/bag_source.h",
                 "line": 45,
                 "column": 23
             },
@@ -101,22 +101,22 @@
                 "kind": 6,
                 "parent_name": "",
                 "name": "negidxing(const arma::uvec &, const arma::uvec &)",
-                "file": "/home/bora/bags/src/bag_source.h",
+                "file": "/home/bora/packages/bags/src/bag_source.h",
                 "line": 62,
                 "column": 12
             }
         ]
     },
     {
-        "file": "/home/bora/bags/src/matrix_distance.cpp",
-        "file_last_write": 1658442693.0,
+        "file": "/home/bora/packages/bags/src/matrix_distance.cpp",
+        "file_last_write": 1680285095.0,
         "definitions": [
             {
                 "usr": "c:@F@distmat_Euclidean#&1$@N@arma@S@Mat>#d#",
                 "kind": 6,
                 "parent_name": "",
                 "name": "distmat_Euclidean(const arma::mat &)",
-                "file": "/home/bora/bags/src/matrix_distance.cpp",
+                "file": "/home/bora/packages/bags/src/matrix_distance.cpp",
                 "line": 5,
                 "column": 11
             },
@@ -125,15 +125,15 @@
                 "kind": 6,
                 "parent_name": "",
                 "name": "distmat_abs(const arma::mat &)",
-                "file": "/home/bora/bags/src/matrix_distance.cpp",
+                "file": "/home/bora/packages/bags/src/matrix_distance.cpp",
                 "line": 21,
                 "column": 11
             }
         ]
     },
     {
-        "file": "/home/bora/bags/src/matrix_distance.h",
-        "file_last_write": 1658285127.0,
+        "file": "/home/bora/packages/bags/src/matrix_distance.h",
+        "file_last_write": 1680285095.0,
         "definitions": []
     }
 ]
