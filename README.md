@@ -20,4 +20,4 @@ are modeled with a G-BAG prior. It shows how to 1) generate random data from pri
 
 **Note:** The current version is tested on R version 4.1.0 under Ubuntu 20.04.2.
 
-**FAQ:** In case installation fails, confirm if all mandatory tools are available to compile the package. For more help, check [R for macOS](https://mac.r-project.org/tools/) or [R for Windows](https://cran.r-project.org/bin/windows/Rtools/).
+**FAQ:** In case installation fails, please confirm if all mandatory tools are available to compile the package. For more help, check [R for macOS](https://mac.r-project.org/tools/) or [R for Windows](https://cran.r-project.org/bin/windows/Rtools/).
