@@ -359,63 +359,65 @@ bag <- function(y, X = NULL, coords,
   ##############
   # prediction #
   ##############
-  if (verbose) {
-    cat('\nprediction...\n')
-  }
+  if (!is.null(coords_pred)) {
+    if (verbose) {
+      cat('\nprediction...\n')
+    }
 
-  # prediction
-  ptts_pred <- sort(unique(coords_pred_ptt$partition))
-  idx_pred <- list()
-  for (l in ptts_pred) {
-    idx_pred[[l]] <- which(coords_pred_ptt$partition == l)
-  }
+    # prediction
+    ptts_pred <- sort(unique(coords_pred_ptt$partition))
+    idx_pred <- list()
+    for (l in ptts_pred) {
+      idx_pred[[l]] <- which(coords_pred_ptt$partition == l)
+    }
 
-  # parent partitions and idx
-  z_postm <- apply(out$z_save, 1, getmode)
-  pptts_pred_list <- list()
-  for (l in ptts_pred) {
-    tmp <- data.frame(x = l) %>%
-      tidyr::separate(x, c("row", "col", "time"),
-                      sep = ",", convert = TRUE)
-    if (l %in% ptts) {
-      h <- z_postm[which(ptts == l)]
-      pptts <- c(l,
-                 (pptts_list[[l]])[[h]]$ppartition,                          # parent chosen by wind
-                 sprintf(ptt_format(nd), tmp$row, tmp$col, tmp$time+1))         # future
+    # parent partitions and idx
+    z_postm <- apply(out$z_save, 1, getmode)
+    pptts_pred_list <- list()
+    for (l in ptts_pred) {
+      tmp <- data.frame(x = l) %>%
+        tidyr::separate(x, c("row", "col", "time"),
+                        sep = ",", convert = TRUE)
+      if (l %in% ptts) {
+        h <- z_postm[which(ptts == l)]
+        pptts <- c(l,
+                   (pptts_list[[l]])[[h]]$ppartition,                          # parent chosen by wind
+                   sprintf(ptt_format(nd), tmp$row, tmp$col, tmp$time+1))         # future
+      } else {
+        pptts <- parent8NN(tmp, coords_ptt, nd)
+      }
+      pptts_idx <- NULL
+      for (i in 1:length(pptts)) {
+        pptts_idx <- c(pptts_idx, idx[[pptts[i]]])
+      }
+      pptts_pred_list[[l]] <- list(ppartition = pptts, pidx = pptts_idx)
+    }
+
+    # sample w_pred and y_pred from posterior predictive dist
+    pred_time <- system.time({
+      pred <- bag_predict(coords_tr = coords,
+                          coords_pred = coords_pred,
+                          ptts_pred = ptts_pred,
+                          idx_pred = idx_pred,
+                          pptts_pred_list = pptts_pred_list,
+                          w_save = w_save,
+                          psi_save = out$psi_save,
+                          sigsq_save = out$sig_sq_save,
+                          tausq_save = out$tau_sq_save,
+                          verbose = verbose,
+                          num_threads = n_threads)
+    })
+
+    out$w_pred_save <- pred$w_pred_save
+    if (is.null(X_pred)) {
+      out$y_pred_save <- pred$y_pred_save + ybar
     } else {
-      pptts <- parent8NN(tmp, coords_ptt, nd)
+      out$y_pred_save <- pred$y_pred_save + ybar + X_pred%*%out$beta_save
     }
-    pptts_idx <- NULL
-    for (i in 1:length(pptts)) {
-      pptts_idx <- c(pptts_idx, idx[[pptts[i]]])
-    }
-    pptts_pred_list[[l]] <- list(ppartition = pptts, pidx = pptts_idx)
+
+    out$pred_iter <- mcmc$save
+    out$pred_time <- pred_time
   }
-
-  # sample w_pred and y_pred from posterior predictive dist
-  pred_time <- system.time({
-    pred <- bag_predict(coords_tr = coords,
-                        coords_pred = coords_pred,
-                        ptts_pred = ptts_pred,
-                        idx_pred = idx_pred,
-                        pptts_pred_list = pptts_pred_list,
-                        w_save = w_save,
-                        psi_save = out$psi_save,
-                        sigsq_save = out$sig_sq_save,
-                        tausq_save = out$tau_sq_save,
-                        verbose = verbose,
-                        num_threads = n_threads)
-  })
-
-  out$w_pred_save <- pred$w_pred_save
-  if (is.null(X_pred)) {
-    out$y_pred_save <- pred$y_pred_save + ybar
-  } else {
-    out$y_pred_save <- pred$y_pred_save + ybar + X_pred%*%out$beta_save
-  }
-
-  out$pred_iter <- mcmc$save
-  out$pred_time <- pred_time
 
   if (verbose) { close(pb2) }
   return(out)
